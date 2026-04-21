@@ -102,3 +102,65 @@ First, I installed the ARC controller inside the Kubernetes cluster. This compon
 Then, I deployed a runner scale set connected to my GitHub repository. This allows the system to create runner pods dynamically whenever new jobs are triggered.
 
 I used Helm for deployment and configuration instead of writing raw Kubernetes manifests, which made it easier to manage and update the setup.
+
+
+---
+
+## 📸 Proof of Execution
+
+Below are the key observations captured during testing, showing how the system behaves under load.
+
+---
+
+### ⚡ Parallel Job Execution
+
+![Parallel Jobs](./screenshots/parallel-jobs.png)
+
+Multiple CI jobs are triggered at the same time and start executing immediately without any queue delay.  
+This confirms that the system supports parallel execution.
+
+---
+
+### 📈 Dynamic Runner Scaling
+
+![Pods Scaling](./screenshots/pods-scaling.png)
+
+Kubernetes dynamically creates multiple runner pods based on the number of jobs triggered.  
+Each job is assigned to a separate runner pod.
+
+---
+
+### 🗑️ Ephemeral Runner Behavior
+
+![Pods Terminated](./screenshots/pods-terminated.png)
+
+Runner pods are automatically deleted after job completion.  
+This ensures efficient resource usage and prevents idle infrastructure.
+
+---
+
+### 🧪 Job Execution Logs
+
+![Job Logs](./screenshots/job-logs.png)
+
+The logs confirm that jobs are executed successfully on self-hosted runners inside Kubernetes.  
+Each job runs in an isolated environment.
+
+---
+
+### 🔗 Runner Registration
+
+![Runner](./screenshots/runner-registered.png)
+
+The self-hosted runner is successfully registered and connected to GitHub, allowing workflows to be executed on the cluster.
+
+---
+
+### 🚀 Impact on CI Performance
+
+![Before vs After](./screenshots/before-after.png)
+
+Before: Jobs were queued due to limited runners  
+After: Jobs execute immediately with dynamic scaling  
+
+This demonstrates how the system eliminates workflow delays.
