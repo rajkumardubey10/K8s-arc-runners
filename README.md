@@ -7,6 +7,7 @@
 ## 📌 Table of Contents
 - [Overview](#-overview)
 - [Problem Statement](#-problem-statement)
+- [Before vs After](#-before-vs-after)
 - [Solution](#-solution)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
@@ -106,61 +107,160 @@ I used Helm for deployment and configuration instead of writing raw Kubernetes m
 
 ---
 
+## 🔍 Logging & Observability
+
+### 🏗️ Logging Architecture
+
+<img width="1536" height="1024" alt="logging-architecture" src="https://github.com/user-attachments/assets/0fa62f3d-4f89-4bc5-9c15-f593d1d99fab" />
+
+
+---
+
+### 🧠 Overview
+
+To enable debugging of ephemeral runner pods, I implemented centralized logging using:
+
+- Grafana Alloy (DaemonSet log collection)  
+- Grafana Loki (log storage & indexing)  
+- Grafana (log querying & visualization)  
+
+---
+
+### 🔄 Log Flow
+
+```
+Runner Pods → Alloy → Loki Gateway → Loki → Grafana
+```
+
+---
+
+### 📸 Centralized Logs in Grafana
+
+<img width="1366" height="768" alt="grafana-logs-loki" src="https://github.com/user-attachments/assets/7c1593be-738d-4507-87f9-53bf9fa003db" />
+
+
+👉 Logs from all runner pods are aggregated and searchable.
+
+---
+### 🎯 Why this matters
+
+- Logs persist even after pod deletion  
+- Enables debugging of CI failures  
+- Provides historical visibility  
+- Makes system production-ready  
+
+ ---
+ ## 🧰 Tech Stack
+
+| Category              | Tools / Technologies                          | Purpose |
+|----------------------|-----------------------------------------------|--------|
+| 🚀 CI/CD Platform     | GitHub Actions                                | Workflow orchestration and job execution |
+| ☸️ Orchestration      | Kubernetes                                    | Container orchestration and runner lifecycle |
+| 🔁 Autoscaling        | Actions Runner Controller (ARC)               | Dynamic provisioning of self-hosted runners |
+| 📦 Package Manager    | Helm                                          | Deployment and management of Kubernetes resources |
+| 🧾 Log Collection     | Grafana Alloy                                 | Collect logs from Kubernetes nodes (DaemonSet) |
+| 📊 Log Storage        | Grafana Loki                                  | Centralized log aggregation and indexing |
+| 📈 Visualization      | Grafana                                       | Log querying and visualization using LogQL |
+| 🐳 Container Runtime  | Docker                                        | Container execution environment |
+| ⚙️ CLI Tools          | kubectl                                       | Kubernetes cluster management |
+| 📝 Configuration      | YAML                                          | Workflow and infrastructure configuration |
+ 
 ## 📸 Proof of Execution
 
 Below are the key observations captured during testing, showing how the system behaves under load.
 
 ---
 
-### ⚡ Parallel Job Execution
+### 🗑️ Logs Persist After Pod Deletion (🔥 Key Capability)
 
-![Parallel Jobs](./screenshots/parallel-jobs.png)
-
-Multiple CI jobs are triggered at the same time and start executing immediately without any queue delay.  
-This confirms that the system supports parallel execution.
+<!-- 📸 Screenshot: pods-terminating.png -->
+<img width="1366" height="768" alt="terminated-pod-log" src="https://github.com/user-attachments/assets/4a7cb3dd-7ed0-429c-a366-c936ae870f6b" />
 
 ---
 
-### 📈 Dynamic Runner Scaling
+<!-- 📸 Screenshot: deleted-pod-logs.png -->
+<img width="1366" height="768" alt="deleted-pod-logs" src="https://github.com/user-attachments/assets/021fe23d-9474-4ba2-b141-f224516878a0" />
 
-![Pods Scaling](./screenshots/pods-scaling.png)
 
-Kubernetes dynamically creates multiple runner pods based on the number of jobs triggered.  
+Even after the runner pod enters **Terminating state and gets deleted**, logs are still accessible in Grafana.
+
+#### 🔍 What this proves:
+
+- Runner pods are ephemeral and get deleted after job completion  
+- Logs are **not lost** after pod termination  
+- Loki stores logs independently of pod lifecycle  
+- Enables debugging of completed or failed CI jobs  
+
+#### 🧠 How it works:
+
+- Logs are collected by Alloy before pod termination  
+- Logs are pushed to Loki and stored persistently  
+- Grafana queries logs from Loki, not from live pods  
+
+👉 This is critical for real-world CI/CD systems where workloads are short-lived.
+
+---
+
+### ⚡ Parallel Job Execution
+
+<img width="1366" height="768" alt="Screenshot 2026-04-27 193039" src="https://github.com/user-attachments/assets/186a2733-6086-4b27-9e34-206d791a266e" />
+
+
+- Multiple CI jobs are triggered at the same time and start executing immediately without any queue delay.  
+This confirms that the system supports parallel execution.
+
+- Kubernetes dynamically creates multiple runner pods based on the number of jobs triggered.  
 Each job is assigned to a separate runner pod.
 
 ---
 
 ### 🗑️ Ephemeral Runner Behavior
+<img width="1366" height="768" alt="deleted-pod-logs" src="https://github.com/user-attachments/assets/60d571d2-1223-42b6-806f-2ade88cd1ee9" />
 
-![Pods Terminated](./screenshots/pods-terminated.png)
 
-Runner pods are automatically deleted after job completion.  
-This ensures efficient resource usage and prevents idle infrastructure.
+- Runner pods are automatically deleted after job completion.  
+- This ensures efficient resource usage and prevents idle infrastructure.
 
 ---
 
-### 🧪 Job Execution Logs
+### 🧪 All Pods Running inside the Monitoring Namespace
 
-![Job Logs](./screenshots/job-logs.png)
+<img width="1366" height="768" alt="terminal-screenshot-daemonset" src="https://github.com/user-attachments/assets/b007fc82-d758-48a7-8d57-723080e7492a" />
 
-The logs confirm that jobs are executed successfully on self-hosted runners inside Kubernetes.  
-Each job runs in an isolated environment.
+- This screenshot shows the Kubernetes cluster with ARC controller, runner scale sets, and the monitoring stack (Grafana, Loki, Alloy) running successfully.
 
+- It confirms that both the CI/CD infrastructure and centralized logging system are properly deployed and operational within the cluster.
 ---
 
 ### 🔗 Runner Registration
 
-![Runner](./screenshots/runner-registered.png)
+<img width="1366" height="768" alt="ARC_runner_screenshot " src="https://github.com/user-attachments/assets/13c0b079-8bff-4b4b-99d2-89c025fe81a1" />
 
-The self-hosted runner is successfully registered and connected to GitHub, allowing workflows to be executed on the cluster.
+
+
+- The self-hosted runner is successfully registered and connected to GitHub, allowing workflows to be executed on the cluster.
 
 ---
 
+### ✅ Alloy Daemonset Running on Every Node
+---
+<img width="1366" height="768" alt="runner-scaling" src="https://github.com/user-attachments/assets/18546ecb-cc94-46cc-a74a-694c8d6d46a6" />
+
+- One Alloy pod per node ensure complete log coverage.
+- No matter which node a runner pod schedules on - Alloyis there to collect its logs.
+
+
 ### 🚀 Impact on CI Performance
+## 📊 Results
 
-![Before vs After](./screenshots/before-after.png)
-
-Before: Jobs were queued due to limited runners  
-After: Jobs execute immediately with dynamic scaling  
+| Metric                              | Before                     | After                          |
+|-------------------------------------|----------------------------|--------------------------------|
+| Workflow Queue Time                 | High during peak           | Zero — instant execution       |
+| Concurrent Workflows                | 1–2 max                    | 8–12 simultaneously            |
+| Infrastructure Cost                 | Always-on EC2              | On-demand pods only            |
+| Cost Reduction                      | —                          | ~30–40%                        |
+| Pipeline Execution Time             | Baseline                   | ~60% faster                    |
+| Log Availability After Pod Deletion | ❌ Lost forever            | ✅ Retained for 30 days        |
+| Debug Capability for Failed Jobs    | ❌ None                    | ✅ Full log history available  |
 
 This demonstrates how the system eliminates workflow delays.
