@@ -25,7 +25,7 @@ jobs:
 
   test:
     name: Test Job
-    runs-on: arc-runner-set
+    runs-on: gha-runner-scale-set
     steps:
       - name: Start
         run: echo "=== TEST JOB STARTED on pod $HOSTNAME ==="
@@ -42,7 +42,7 @@ jobs:
 
   lint:
     name: Lint Job
-    runs-on: arc-runner-set
+    runs-on: gha-runner-scale-set
     steps:
       - name: Start
         run: echo "=== LINT JOB STARTED on pod $HOSTNAME ==="
@@ -59,7 +59,7 @@ jobs:
 
   scan:
     name: Security Scan Job
-    runs-on: arc-runner-set
+    runs-on: gha-runner-scale-set
     steps:
       - name: Start
         run: echo "=== SCAN JOB STARTED on pod $HOSTNAME ==="
