@@ -10,17 +10,14 @@
 - [Before vs After](#-before-vs-after)
 - [Solution](#-solution)
 - [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
+- [Workflow Execution Flow](#-workflow-execution-flow)
 - [Implementation](#-implementation)
-- [CI Workflow Demo](#-ci-workflow-demo)
-- [Validation & Proof](#-validation--proof)
+- [Logging & Observability](#-logging-&-observability)
+- [Tech Stack](#-tech-stack)
+- [Proof of Execution](#-proof-of-execution)
 - [Results](#-results)
-- [Challenges & Fixes](#-challenges--fixes)
-- [Key Learnings](#-key-learnings)
-- [Future Improvements](#-future-improvements)
 - [How to Run](#-how-to-run)
-- [Summary](#-summary)
+  
 
 ---
 
