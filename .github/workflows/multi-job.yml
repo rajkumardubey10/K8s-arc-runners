@@ -1,0 +1,75 @@
+# .github/workflows/parallel-jobs.yml
+
+name: Parallel Jobs Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Job
+    runs-on: gha-runner-scale-set
+    steps:
+      - name: Start
+        run: echo "=== BUILD JOB STARTED on pod $HOSTNAME ==="
+
+      - name: Simulate Build
+        run: |
+          echo "Installing dependencies..."
+          sleep 5
+          echo "Compiling source code..."
+          sleep 5
+          echo "Build artifacts created..."
+          sleep 5
+          echo "=== BUILD JOB COMPLETED ==="
+
+  test:
+    name: Test Job
+    runs-on: arc-runner-set
+    steps:
+      - name: Start
+        run: echo "=== TEST JOB STARTED on pod $HOSTNAME ==="
+
+      - name: Simulate Tests
+        run: |
+          echo "Running unit tests..."
+          sleep 5
+          echo "Running integration tests..."
+          sleep 5
+          echo "Test coverage: 87%"
+          sleep 5
+          echo "=== TEST JOB COMPLETED ==="
+
+  lint:
+    name: Lint Job
+    runs-on: arc-runner-set
+    steps:
+      - name: Start
+        run: echo "=== LINT JOB STARTED on pod $HOSTNAME ==="
+
+      - name: Simulate Lint
+        run: |
+          echo "Checking code formatting..."
+          sleep 5
+          echo "Checking syntax rules..."
+          sleep 5
+          echo "No lint errors found..."
+          sleep 5
+          echo "=== LINT JOB COMPLETED ==="
+
+  scan:
+    name: Security Scan Job
+    runs-on: arc-runner-set
+    steps:
+      - name: Start
+        run: echo "=== SCAN JOB STARTED on pod $HOSTNAME ==="
+
+      - name: Simulate Scan
+        run: |
+          echo "Scanning dependencies for vulnerabilities..."
+          sleep 5
+          echo "Scanning docker image layers..."
+          sleep 5
+          echo "No critical vulnerabilities found..."
+          sleep 5
+          echo "=== SCAN JOB COMPLETED ==="
