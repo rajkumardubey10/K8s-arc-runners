@@ -1,48 +1,53 @@
+
+controller:
+  type: daemonset
+
 alloy:
   configMap:
     content: |
-      logging {
-        level = "info"
-      }
-
-      # Discover pods
-      discovery.kubernetes "pods" {
+      discovery.kubernetes "pod" {
         role = "pod"
-      }
-
-      # Keep only ARC namespace
-      discovery.relabel "arc_only" {
-        targets = discovery.kubernetes.pods.targets
-
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          regex         = "arc-runners"
-          action        = "keep"
+        selectors {
+          role  = "pod"
+          field = "spec.nodeName=" + coalesce(sys.env("HOSTNAME"), constants.hostname)
         }
       }
 
-      # Add useful labels + build file path to pod logs
-      discovery.relabel "arc_logs" {
-        targets = discovery.relabel.arc_only.output
+      discovery.relabel "pod_logs" {
+        targets = discovery.kubernetes.pod.targets
 
         rule {
           source_labels = ["__meta_kubernetes_namespace"]
+          action        = "keep"
+          regex         = "arc-runners"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          action        = "replace"
           target_label  = "namespace"
         }
 
         rule {
           source_labels = ["__meta_kubernetes_pod_name"]
+          action        = "replace"
           target_label  = "pod"
         }
 
         rule {
           source_labels = ["__meta_kubernetes_pod_container_name"]
+          action        = "replace"
           target_label  = "container"
         }
 
-        # IMPORTANT: where to read logs from on the node
         rule {
-          source_labels = ["__meta_kubernetes_pod_uid","__meta_kubernetes_pod_container_name"]
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          action        = "replace"
+          target_label  = "app"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
           action        = "replace"
           target_label  = "__path__"
           separator     = "/"
@@ -50,15 +55,47 @@ alloy:
         }
       }
 
-      # Read logs from files (reliable for short-lived pods)
-      loki.source.file "arc" {
-        targets    = discovery.relabel.arc_logs.output
-        forward_to = [loki.write.default.receiver]
+      loki.source.kubernetes "pod_logs" {
+        targets    = discovery.relabel.pod_logs.output
+        forward_to = [loki.process.pod_logs.receiver]
       }
 
-      # Send to Loki
-      loki.write "default" {
+      loki.process "pod_logs" {
+        stage.cri {}
+
+        stage.static_labels {
+          values = {
+            cluster = "arc-cluster",
+          }
+        }
+
+        forward_to = [loki.write.loki_endpoint.receiver]
+      }
+
+      loki.write "loki_endpoint" {
         endpoint {
-          url = "http://loki.logging.svc.cluster.local:3100/loki/api/v1/push"
+          url = "http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"
         }
       }
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
