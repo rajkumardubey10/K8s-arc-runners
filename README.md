@@ -234,7 +234,6 @@ Each job is assigned to a separate runner pod.
 <img width="1366" height="768" alt="ARC_runner_screenshot " src="https://github.com/user-attachments/assets/13c0b079-8bff-4b4b-99d2-89c025fe81a1" />
 
 
-
 - The self-hosted runner is successfully registered and connected to GitHub, allowing workflows to be executed on the cluster.
 
 ---
