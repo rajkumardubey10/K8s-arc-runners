@@ -28,16 +28,34 @@ It simulates real-world CI workloads with **parallel execution and autoscaling**
 
 ---
 
-## 🎯 Problem statement 
+## 📋 Context
 
-In many setups, self-hosted runners are deployed on static machines (like EC2), which leads to:
+This project was built to solve a real infrastructure challenge shared by a client — 
+a mid-size SaaS engineering team whose GitHub Actions self-hosted runners (on EC2) 
+were struggling to keep up with increasing PR frequency as their developer team grew. 
+Due to confidentiality, company-specific details aren't included here, but the 
+architecture and implementation below reflect the actual solution delivered.
 
-- ⏳ Workflows getting queued during peak time  
-- 📉 Poor scalability when multiple jobs run together  
-- 💸 Idle resources when no jobs are running  
-- ⚠️ Shared environments causing inconsistent builds  
+> **Note:** This repository is a self-built demonstration of the architecture and 
+> approach delivered for the client engagement described above. It does not contain 
+> the client's actual codebase, infrastructure, or proprietary configuration — 
+> everything here was independently rebuilt to showcase the technical solution 
+> publicly, since the original client environment cannot be shared for 
+> confidentiality reasons.
 
-I wanted a setup that could handle multiple jobs at once without delays.
+## 🎯 Problem statement
+
+The client's self-hosted runners were deployed on static EC2 instances. As their 
+developer team grew and PR frequency increased, this setup led to:
+
+- ⏳ Workflows getting queued during peak time, slowing down delivery
+- 📉 Poor scalability when multiple jobs were triggered together
+- 💸 Rising infrastructure costs from spinning up additional always-on EC2 
+  instances to handle load
+- ⚠️ Shared environments causing inconsistent builds between jobs
+
+The client needed a setup that could scale with concurrent workflow demand 
+without manually provisioning more static infrastructure.
 
 ---
 
@@ -55,15 +73,19 @@ Runners scale dynamically and jobs run in parallel.
 
 ## 💡 Solution
 
-To solve this, I used Kubernetes with ARC.
+I proposed and implemented a migration from static EC2 runners to Kubernetes-based 
+runners using Actions Runner Controller (ARC), replacing always-on infrastructure 
+with dynamic, on-demand scaling.
 
 The approach:
 
-- ⚙️ Create runners only when jobs are triggered  
-- 🧼 Run each job in a fresh, isolated environment  
-- 🔁 Automatically remove runners after execution  
+- ⚙️ Create runner pods only when jobs are triggered
+- 🧼 Run each job in a fresh, isolated pod environment
+- 🔁 Automatically remove runners after execution, with a cooldown period 
+  during scale-down
 
-This makes the system scalable, efficient, and reliable.
+This gave the client a system that scales with actual demand, removes 
+inconsistent shared-runner state, and eliminates cost from idle EC2 capacity.
 
 ---
 
