@@ -6,6 +6,7 @@
 
 ## 📌 Table of Contents
 - [Overview](#-overview)
+- [Context](#-context)
 - [Problem Statement](#-problem-statement)
 - [Before vs After](#-before-vs-after)
 - [Solution](#-solution)
